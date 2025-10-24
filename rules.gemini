@@ -1,0 +1,71 @@
+# File Reorganization Template for Profiling Results
+## Objective
+To provide a standardized template and instructions for reorganizing profiling data from a given directory or zip file into a structured format.
+## Source Structure Scenarios
+The tool can handle two types of input structures.
+### Scenario 1: Flat Structure (Default SUT)
+If no SUT-specific directories are present, the tool expects a flat structure. A default SUT (`sut1`) will be created in the target.
+```
+source_directory/
+├── PlatformProfiler/
+│   └── ...
+├── WorkloadProfiler/
+│   └── ...
+├── Results/      # (or Logs/)
+│   └── ...
+└── (any other root files like config.json, info.txt)
+```
+### Scenario 2: Multi-SUT Structure
+If the source is already organized by SUT, the tool will preserve this structure.
+```
+source_directory/
+├── sut1/
+│   ├── PlatformProfiler/
+│   ├── WorkloadProfiler/
+│   └── Results/
+└── sut2/
+    ├── PlatformProfiler/
+    ├── WorkloadProfiler/
+    └── Logs/
+```
+## Target Structure (Output)
+The files will be reorganized into the following structure. A unique UUID will be generated for the root directory.
+```
+<uuid>/
+└── <sut_name>/
+    ├── PlatformProfiler/
+    │   └── ... (copied from source)
+    ├── WorkloadProfiler/
+    │   └── ... (copied from source)
+    ├── Results/
+    │   └── run<run_number>/ (e.g., run1)
+    │       └── iteration<iteration_number>/ (e.g., iteration1, iteration2, ...)
+    │           └── instance<instance_number>/ (e.g., instance1)
+    │               └── ... (contents from source 'Results/' or 'Logs/')
+    └── (any other files from source root are placed here)
+```
+## Mapping and Organization Rules
+1.  **Root Directory**: A new root directory will be created with a unique name (a UUID).
+2.  **SUT Handling**:
+    *   The tool will inspect the source to see if it contains multiple SUT directories.
+    *   The SUT files can be found named as SUT1, SUT2 and so on or VM1, VM2, and so on
+    *   In the target directories the folders will be named SUT1, SUT2, and so on even if it is named as VM in the source directory.
+    *   If it does (Scenario 2), it will create a corresponding SUT directory in the target for each one found.
+    *   If it does not (Scenario 1), a single default directory named `sut1` will be created in the target.
+3.  **Profilers and Root Files**:
+    *   The `PlatformProfiler` and `WorkloadProfiler` folders from the source SUT will be moved to `<uuid>/<sut_name>/`.
+    *   For the WorkloadProfiler, if the directory doesn't exist in the source directory, create one in target directory.
+    *   Inside the WorkloadProfiler, create the subfolder structure same as the results folder - run1/iteration1/ and use wp_run files as it is in source directory.
+    *   Any additional files located at the root of the source directory (as in Scenario 1) will also be moved to the `<uuid>/<sut_name>/` directory.
+4.  **Benchmark Results (from Logs/ or Results/)**:
+    *   A `Results` directory will be created inside the target SUT folder (`<uuid>/<sut_name>/Results`).
+    *   The contents of the source `Results` folder (or `Logs` folder, if `Results` doesn't exist) will be moved into this new structure.
+    *   **Runs, Iterations, and Instances**: By default, a `run1` and `instance1` will be created.
+    *   If the source `Logs`/`Results` folder contains subdirectories, they will be treated as sequential iterations and **renamed**. For example, if three folders (e.g., `34g43g`, `98hrh`, `something_else`) are found, they will be mapped to `.../run1/iteration1/instance1/`, `.../run1/iteration2/instance1/`, and `.../run1/iteration3/instance1/` respectively.
+    *   If the source folder only contains files, they will all be moved to a single default path: `<uuid>/<sut_name>/Results/run1/iteration1/instance1/`.
+ 
+5. Any additional files in the source directory will be copied to the target directory as it is.
+ 
+
+## How to Use
+Provide the path to the source directory or zip file. The script will automatically perform the reorganization based on the rules defined above.
